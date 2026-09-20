@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// AppMaker tetap ada untuk multi-tenancy (x-maker-key)
+model AppMaker {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  username  String   @unique @db.VarChar(50)
+  email     String   @unique @db.VarChar(100)
+  password  String   @db.VarChar(255)
+  app_key   String   @unique @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users   User[]
+  diskons Diskon[]
+
+  @@map("app_makers")
+}
+
+enum UserRole {
+  member
+  admin_space
+}
+
+// Sesuai ERD: users (id, username, password, role)
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(50)
+  password  String   @db.VarChar(255)
+  role      UserRole
+  makerId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  maker      AppMaker    @relation(fields: [makerId], references: [id])
+  member     Member?
+  spaceOwner SpaceOwner?
+
+  @@map("users")
+}
+
+// Sesuai ERD: member (id, nama_member, instansi, alamat, telp, foto, id_user)
+model Member {
+  id          Int      @id @default(autoincrement())
+  nama_member String   @db.VarChar(100)
+  instansi    String?  @db.VarChar(100)
+  alamat      String?  @db.Text
+  telp        String?  @db.VarChar(20)
+  foto        String?  @db.VarChar(255)
+  id_user     Int      @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User        @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  reservasi Reservasi[]
+
+  @@map("members")
+}
+
+// Sesuai ERD: space_owner (id, nama_coworking, nama_pemilik, telp, id_user)
+model SpaceOwner {
+  id             Int      @id @default(autoincrement())
+  nama_coworking String   @db.VarChar(100)
+  nama_pemilik   String   @db.VarChar(100)
+  telp           String?  @db.VarChar(20)
+  alamat         String?  @db.Text
+  id_user        Int      @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user   User    @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  spaces Space[]
+
+  @@map("space_owners")
+}
+
+// Sesuai ERD: tipe ENUM(desk, meeting_room, private_office)
+enum SpaceTipe {
+  desk
+  meeting_room
+  private_office
+}
+
+// Sesuai ERD: space (id, nama_space, harga_per_jam, kapasitas, tipe, foto, deskripsi, id_owner)
+model Space {
+  id            Int       @id @default(autoincrement())
+  nama_space    String    @db.VarChar(100)
+  harga_per_jam Float     @db.Double
+  kapasitas     Int
+  tipe          SpaceTipe
+  foto          String?   @db.VarChar(255)
+  deskripsi     String?   @db.Text
+  id_owner      Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  owner            SpaceOwner        @relation(fields: [id_owner], references: [id], onDelete: Cascade)
+  detail_reservasi DetailReservasi[]
+
+  @@map("spaces")
+}
+
+// Sesuai ERD: diskon (id, nama_diskon, persentase_diskon, tanggal_awal, tanggal_akhir)
+// + makerId untuk multi-tenancy
+model Diskon {
+  id                Int      @id @default(autoincrement())
+  nama_diskon       String   @db.VarChar(100)
+  persentase_diskon Float    @db.Double
+  tanggal_awal      DateTime @db.Date
+  tanggal_akhir     DateTime @db.Date
+  makerId           Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  maker            AppMaker          @relation(fields: [makerId], references: [id])
+  detail_reservasi DetailReservasi[]
+
+  @@map("diskons")
+}
+
+// Sesuai ERD: status ENUM
+enum ReservasiStatus {
+  belum_dikonfirm
+  disetujui
+  aktif
+  selesai
+  dibatalkan
+}
+
+// Sesuai ERD: reservasi (id, tanggal_reservasi, jam_mulai, durasi_jam, id_owner, id_member, status)
+// + kode_booking, jam_selesai, check_in/out (tambahan fungsional)
+model Reservasi {
+  id                Int             @id @default(autoincrement())
+  kode_booking      String          @unique @db.VarChar(50)
+  tanggal_reservasi DateTime        @db.Date
+  jam_mulai         String          @db.VarChar(10)
+  jam_selesai       String          @db.VarChar(10)
+  durasi_jam        Int
+  id_owner          Int
+  id_member         Int
+  status            ReservasiStatus @default(belum_dikonfirm)
+  check_in_time     DateTime?
+  check_out_time    DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  member           Member            @relation(fields: [id_member], references: [id])
+  detail_reservasi DetailReservasi[]
+
+  @@map("reservasis")
+}
+
+// Sesuai ERD: detail_reservasi (id, id_reservasi, id_space, id_diskon, total_harga)
+model DetailReservasi {
+  id           Int    @id @default(autoincrement())
+  id_reservasi Int
+  id_space     Int
+  id_diskon    Int?
+  total_harga  Float  @db.Double
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reservasi Reservasi @relation(fields: [id_reservasi], references: [id], onDelete: Cascade)
+  space     Space     @relation(fields: [id_space], references: [id])
+  diskon    Diskon?   @relation(fields: [id_diskon], references: [id])
+
+  @@map("detail_reservasis")
+}

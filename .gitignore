@@ -1,0 +1,9 @@
+node_modules/
+.env
+uploads/spaces/*
+uploads/members/*
+uploads/general/*
+!uploads/spaces/.gitkeep
+!uploads/members/.gitkeep
+!uploads/general/.gitkeep
+*.log

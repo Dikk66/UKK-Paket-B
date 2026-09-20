@@ -1,0 +1,1261 @@
+{
+  "info": {
+    "name": "Coworking Space API - UKK 2026/2027",
+    "_postman_id": "coworking-api-ukk-2026-2027",
+    "description": "## Coworking Space Reservation API\n\n### Cara Penggunaan:\n1. **Jalankan folder '01. Setup'** secara berurutan dari atas ke bawah\n2. Token dan app_key akan otomatis tersimpan\n3. Setelah setup selesai, semua folder lain siap dicoba\n\n### Variables yang digunakan:\n- `base_url` → http://localhost:3000\n- `app_key` → otomatis terisi saat register maker\n- `maker_token` → otomatis terisi saat login maker\n- `admin_token` → otomatis terisi saat login admin\n- `member_token` → otomatis terisi saat login member",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+    { "key": "app_key", "value": "ISI_DENGAN_APP_KEY", "type": "string" },
+    { "key": "maker_token", "value": "", "type": "string" },
+    { "key": "admin_token", "value": "", "type": "string" },
+    { "key": "member_token", "value": "", "type": "string" },
+    { "key": "space_id", "value": "1", "type": "string" },
+    { "key": "member_id", "value": "1", "type": "string" },
+    { "key": "diskon_id", "value": "1", "type": "string" },
+    { "key": "reservasi_id", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "01. 🚀 Setup (Jalankan Berurutan)",
+      "description": "Jalankan semua request di folder ini dari atas ke bawah. Token akan otomatis tersimpan.",
+      "item": [
+        {
+          "name": "1. Register Maker",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('app_key', res.data.maker.app_key);",
+                  "    pm.collectionVariables.set('maker_token', res.data.token);",
+                  "    console.log('✅ app_key tersimpan:', res.data.maker.app_key);",
+                  "    pm.test('Register Maker berhasil', () => pm.response.to.have.status(201));",
+                  "} else {",
+                  "    console.log('❌ Gagal:', res.message);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/maker/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Budi Santoso\",\n    \"username\": \"budisantoso\",\n    \"email\": \"budi@smk.sch.id\",\n    \"password\": \"password123\"\n}"
+            },
+            "description": "Daftarkan akun App Maker. app_key dan maker_token otomatis tersimpan ke variables."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Register Admin Space",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "pm.test('Register Admin berhasil', () => pm.response.to.have.status(201));",
+                  "if (res.status === true) {",
+                  "    console.log('✅ Admin registered:', res.data.user.username);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}" }
+            ],
+            "url": "{{base_url}}/api/auth/register/admin-space",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin_cowork\",\n    \"password\": \"password123\",\n    \"nama_coworking\": \"CoWork Jakarta\",\n    \"nama_pemilik\": \"Ahmad Fauzi\",\n    \"telp\": \"081234567890\",\n    \"alamat\": \"Jl. Sudirman No.1 Jakarta\"\n}"
+            },
+            "description": "Daftarkan admin pengelola coworking space."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Login Admin → Simpan Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('admin_token', res.data.token);",
+                  "    console.log('✅ admin_token tersimpan');",
+                  "    pm.test('Login Admin berhasil', () => pm.response.to.have.status(200));",
+                  "} else {",
+                  "    console.log('❌ Login gagal:', res.message);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}" }
+            ],
+            "url": "{{base_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin_cowork\",\n    \"password\": \"password123\"\n}"
+            },
+            "description": "Login sebagai admin. Token otomatis tersimpan ke {{admin_token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Admin - Tambah Space",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('space_id', res.data.space.id.toString());",
+                  "    console.log('✅ space_id tersimpan:', res.data.space.id);",
+                  "    pm.test('Tambah Space berhasil', () => pm.response.to.have.status(201));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/spaces",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_space\": \"Meja A1 - Dekat Jendela\",\n    \"harga_per_jam\": 15000,\n    \"tipe\": \"desk\",\n    \"kapasitas\": 1,\n    \"deskripsi\": \"Meja kerja nyaman dekat jendela dengan pemandangan kota\"\n}"
+            },
+            "description": "Tambah space. space_id otomatis tersimpan ke variables."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Admin - Tambah Diskon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('diskon_id', res.data.diskon.id.toString());",
+                  "    console.log('✅ diskon_id tersimpan:', res.data.diskon.id);",
+                  "    pm.test('Tambah Diskon berhasil', () => pm.response.to.have.status(201));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/diskon",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_diskon\": \"DISKON20\",\n    \"persentase_diskon\": 20,\n    \"tanggal_awal\": \"2026-01-01\",\n    \"tanggal_akhir\": \"2026-12-31\"\n}"
+            },
+            "description": "Tambah kode diskon. diskon_id otomatis tersimpan."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Register Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('member_id', res.data.member.id.toString());",
+                  "    console.log('✅ member_id tersimpan:', res.data.member.id);",
+                  "    pm.test('Register Member berhasil', () => pm.response.to.have.status(201));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}" }
+            ],
+            "url": "{{base_url}}/api/auth/register/member",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"member_ani\",\n    \"password\": \"password123\",\n    \"nama_member\": \"Ani Susanti\",\n    \"instansi\": \"SMK Telkom Malang\",\n    \"alamat\": \"Jl. Danau Ranau No.1 Malang\",\n    \"telp\": \"081234567891\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Login Member → Simpan Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('member_token', res.data.token);",
+                  "    console.log('✅ member_token tersimpan');",
+                  "    pm.test('Login Member berhasil', () => pm.response.to.have.status(200));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}" }
+            ],
+            "url": "{{base_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"member_ani\",\n    \"password\": \"password123\"\n}"
+            },
+            "description": "Login sebagai member. Token otomatis tersimpan ke {{member_token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "8. Member - Buat Reservasi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('reservasi_id', res.data.reservasi.id.toString());",
+                  "    console.log('✅ reservasi_id tersimpan:', res.data.reservasi.id);",
+                  "    console.log('✅ kode_booking:', res.data.reservasi.kode_booking);",
+                  "    pm.test('Buat Reservasi berhasil', () => pm.response.to.have.status(201));",
+                  "} else {",
+                  "    console.log('❌ Gagal:', res.message, res.error);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{member_token}}" }
+            ],
+            "url": "{{base_url}}/api/reservasi",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_space\": {{space_id}},\n    \"tanggal_reservasi\": \"2026-10-15\",\n    \"jam_mulai\": \"09:00\",\n    \"durasi_jam\": 2,\n    \"kode_promo\": \"DISKON20\"\n}"
+            },
+            "description": "Buat reservasi dengan kode promo. reservasi_id otomatis tersimpan."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Root & Health",
+      "item": [
+        {
+          "name": "GET / - Status API",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/",
+            "description": "Cek status API dan daftar semua endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /health - Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health",
+            "description": "Health check server - uptime, environment"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. Maker",
+      "item": [
+        {
+          "name": "POST /api/maker/register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('app_key', res.data.maker.app_key);",
+                  "    pm.collectionVariables.set('maker_token', res.data.token);",
+                  "    console.log('app_key:', res.data.maker.app_key);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/maker/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Nama Lengkap Siswa\",\n    \"username\": \"username_unik\",\n    \"email\": \"email@sch.id\",\n    \"password\": \"Password123\"\n}"
+            },
+            "description": "Registrasi akun App Maker (siswa pengembang frontend). Mendapatkan app_key unik."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/maker/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('maker_token', res.data.token);",
+                  "    console.log('maker_token tersimpan');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/maker/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"budisantoso\",\n    \"password\": \"password123\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/maker/me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{maker_token}}" }],
+            "url": "{{base_url}}/api/maker/me",
+            "description": "Lihat profil & app_key maker yang sedang login. Butuh Bearer maker_token."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/maker/stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{maker_token}}" }],
+            "url": "{{base_url}}/api/maker/stats",
+            "description": "Statistik total user, space, reservasi milik maker ini."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/maker/list",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/maker/list",
+            "description": "Daftar semua maker yang terdaftar. Public, tidak butuh auth."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/register/member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('member_id', res.data.member.id.toString());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}", "description": "WAJIB" }
+            ],
+            "url": "{{base_url}}/api/auth/register/member",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"member_test\",\n    \"password\": \"password123\",\n    \"nama_member\": \"Ani Susanti\",\n    \"instansi\": \"SMK Telkom Malang\",\n    \"alamat\": \"Jl. Danau Ranau No.1 Malang\",\n    \"telp\": \"081234567891\"\n}"
+            },
+            "description": "Registrasi akun member/pelanggan baru. WAJIB header x-maker-key."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/register/admin-space",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}", "description": "WAJIB" }
+            ],
+            "url": "{{base_url}}/api/auth/register/admin-space",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin_test\",\n    \"password\": \"password123\",\n    \"nama_coworking\": \"CoWork Jakarta\",\n    \"nama_pemilik\": \"Ahmad Fauzi\",\n    \"telp\": \"081234567890\",\n    \"alamat\": \"Jl. Sudirman No.1 Jakarta\"\n}"
+            },
+            "description": "Registrasi akun admin pengelola coworking space. WAJIB header x-maker-key."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    if (res.data.user.role === 'admin_space') {",
+                  "        pm.collectionVariables.set('admin_token', res.data.token);",
+                  "        console.log('admin_token tersimpan');",
+                  "    } else {",
+                  "        pm.collectionVariables.set('member_token', res.data.token);",
+                  "        console.log('member_token tersimpan');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}", "description": "WAJIB" }
+            ],
+            "url": "{{base_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin_cowork\",\n    \"password\": \"password123\"\n}"
+            },
+            "description": "Login semua user (member/admin). Token otomatis tersimpan sesuai role."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}", "description": "Ganti dengan member_token untuk member" }],
+            "url": "{{base_url}}/api/auth/profile",
+            "description": "Lihat profil user yang sedang login. Ganti token sesuai user yang ingin dicek."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05. Spaces (Public)",
+      "item": [
+        {
+          "name": "GET /api/spaces/types",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": "{{base_url}}/api/spaces/types",
+            "description": "Daftar tipe space: desk, meeting_room, private_office"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/spaces/availability",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/spaces/availability?id_space={{space_id}}&tanggal=2026-10-15&jam_mulai=09:00&durasi_jam=2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "spaces", "availability"],
+              "query": [
+                { "key": "id_space", "value": "{{space_id}}", "description": "ID space yang ingin dicek" },
+                { "key": "tanggal", "value": "2026-10-15", "description": "Tanggal format YYYY-MM-DD" },
+                { "key": "jam_mulai", "value": "09:00", "description": "Jam mulai format HH:MM" },
+                { "key": "durasi_jam", "value": "2", "description": "Durasi dalam jam" }
+              ]
+            },
+            "description": "Cek ketersediaan space di tanggal dan jam tertentu."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/spaces - Semua Space",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/spaces",
+              "host": ["{{base_url}}"],
+              "path": ["api", "spaces"],
+              "query": [
+                { "key": "tipe", "value": "desk", "disabled": true, "description": "Filter: desk, meeting_room, private_office" },
+                { "key": "search", "value": "meja", "disabled": true, "description": "Cari nama space" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/spaces - Filter Tipe Desk",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/spaces?tipe=desk",
+              "query": [{ "key": "tipe", "value": "desk" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/spaces/:id - Detail Space",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": "{{base_url}}/api/spaces/{{space_id}}",
+            "description": "Detail space berdasarkan ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06. Diskon (Public)",
+      "item": [
+        {
+          "name": "GET /api/diskon/active - Diskon Aktif",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": "{{base_url}}/api/diskon/active",
+            "description": "Daftar diskon yang aktif hari ini"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/diskon/check - Cek Kode Promo",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-maker-key", "value": "{{app_key}}" }
+            ],
+            "url": "{{base_url}}/api/diskon/check",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_diskon\": \"DISKON20\",\n    \"total_harga\": 150000\n}"
+            },
+            "description": "Validasi kode promo dan hitung potongan harga"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/diskon/:id - Detail Diskon",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": "{{base_url}}/api/diskon/{{diskon_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07. Reservasi (Member)",
+      "item": [
+        {
+          "name": "POST /api/reservasi - Buat Reservasi (tanpa diskon)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('reservasi_id', res.data.reservasi.id.toString());",
+                  "    console.log('kode_booking:', res.data.reservasi.kode_booking);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{member_token}}" }
+            ],
+            "url": "{{base_url}}/api/reservasi",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_space\": {{space_id}},\n    \"tanggal_reservasi\": \"2026-11-10\",\n    \"jam_mulai\": \"10:00\",\n    \"durasi_jam\": 3\n}"
+            },
+            "description": "Buat reservasi tanpa kode promo"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/reservasi - Buat Reservasi (dengan kode promo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('reservasi_id', res.data.reservasi.id.toString());",
+                  "    console.log('kode_booking:', res.data.reservasi.kode_booking);",
+                  "    console.log('total_harga:', res.data.reservasi.detail_reservasi[0].total_harga);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{member_token}}" }
+            ],
+            "url": "{{base_url}}/api/reservasi",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_space\": {{space_id}},\n    \"tanggal_reservasi\": \"2026-11-20\",\n    \"jam_mulai\": \"13:00\",\n    \"durasi_jam\": 2,\n    \"kode_promo\": \"DISKON20\"\n}"
+            },
+            "description": "Buat reservasi dengan kode promo DISKON20. Harga otomatis dihitung dengan potongan."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/reservasi - Buat Reservasi (dengan id_diskon)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{member_token}}" }
+            ],
+            "url": "{{base_url}}/api/reservasi",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_space\": {{space_id}},\n    \"tanggal_reservasi\": \"2026-11-25\",\n    \"jam_mulai\": \"14:00\",\n    \"durasi_jam\": 1,\n    \"id_diskon\": {{diskon_id}}\n}"
+            },
+            "description": "Buat reservasi dengan id_diskon langsung"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/reservasi/my - Semua Reservasi Saya",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{member_token}}" }],
+            "url": "{{base_url}}/api/reservasi/my",
+            "description": "Daftar semua reservasi milik member yang login"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/reservasi/my/history - Riwayat (filter bulan)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{member_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/reservasi/my/history?month=11&year=2026",
+              "query": [
+                { "key": "month", "value": "11" },
+                { "key": "year", "value": "2026" }
+              ]
+            },
+            "description": "Riwayat reservasi dengan filter bulan dan tahun"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/reservasi/:id/e-ticket - E-Ticket",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{member_token}}" }],
+            "url": "{{base_url}}/api/reservasi/{{reservasi_id}}/e-ticket",
+            "description": "Ambil e-ticket dengan QR code payload untuk verifikasi"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/reservasi/:id - Detail Reservasi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{member_token}}" }],
+            "url": "{{base_url}}/api/reservasi/{{reservasi_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/reservasi/:id/cancel - Batalkan",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{member_token}}" }],
+            "url": "{{base_url}}/api/reservasi/{{reservasi_id}}/cancel",
+            "description": "Batalkan reservasi. Hanya bisa jika status belum_dikonfirm atau disetujui."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08. Admin - Profile",
+      "item": [
+        {
+          "name": "GET /api/admin/profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/profile"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/admin/profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_coworking\": \"CoWork Jakarta Premium\",\n    \"nama_pemilik\": \"Ahmad Fauzi Updated\",\n    \"telp\": \"089999999999\",\n    \"alamat\": \"Jl. Sudirman No.99 Jakarta Pusat\"\n}"
+            },
+            "description": "Update profil coworking space. Field: nama_coworking, nama_pemilik, telp, alamat."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09. Admin - Members",
+      "item": [
+        {
+          "name": "GET /api/admin/members - Semua Member",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/admin/members",
+              "query": [
+                { "key": "search", "value": "Ani", "disabled": true, "description": "Filter pencarian nama/instansi/telp" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/members?search=Ani - Cari Member",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/admin/members?search=Ani",
+              "query": [{ "key": "search", "value": "Ani" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/members - Tambah Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('member_id', res.data.member.id.toString());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/members",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"member_baru\",\n    \"password\": \"password123\",\n    \"nama_member\": \"Bambang Wijaya\",\n    \"instansi\": \"PT. Maju Bersama\",\n    \"alamat\": \"Jl. Pahlawan No.5\",\n    \"telp\": \"085678901234\"\n}"
+            },
+            "description": "Admin tambah member baru secara langsung"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/members/:id - Detail Member",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/members/{{member_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/admin/members/:id - Update Member",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/members/{{member_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_member\": \"Bambang Wijaya Updated\",\n    \"instansi\": \"PT. Maju Bersama Tbk\",\n    \"telp\": \"085678901299\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/members/:id - Hapus Member",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/members/{{member_id}}",
+            "description": "Hapus member. Gagal jika member masih punya reservasi aktif."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Admin - Spaces",
+      "item": [
+        {
+          "name": "GET /api/admin/spaces - Semua Space Saya",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/spaces"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/spaces - Tambah Space (Desk)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('space_id', res.data.space.id.toString());",
+                  "    console.log('space_id tersimpan:', res.data.space.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/spaces",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_space\": \"Meja A1 - Dekat Jendela\",\n    \"harga_per_jam\": 15000,\n    \"tipe\": \"desk\",\n    \"kapasitas\": 1,\n    \"deskripsi\": \"Meja kerja nyaman dekat jendela\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/spaces - Tambah Space (Meeting Room)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/spaces",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_space\": \"Meeting Room Alpha\",\n    \"harga_per_jam\": 75000,\n    \"tipe\": \"meeting_room\",\n    \"kapasitas\": 10,\n    \"deskripsi\": \"Ruang meeting kapasitas 10 orang dengan proyektor\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/spaces - Tambah Space (Private Office)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/spaces",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_space\": \"Private Office Suite 1\",\n    \"harga_per_jam\": 50000,\n    \"tipe\": \"private_office\",\n    \"kapasitas\": 4,\n    \"deskripsi\": \"Ruang privat untuk tim kecil 4 orang\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/spaces/:id - Detail Space",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/spaces/{{space_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/admin/spaces/:id - Update Space",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/spaces/{{space_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_space\": \"Meja A1 Updated\",\n    \"harga_per_jam\": 20000,\n    \"kapasitas\": 2,\n    \"deskripsi\": \"Deskripsi diperbarui\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/spaces/:id - Hapus Space",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/spaces/{{space_id}}",
+            "description": "Hapus space. Gagal jika masih ada reservasi aktif."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Admin - Diskon",
+      "item": [
+        {
+          "name": "GET /api/admin/diskon - Semua Diskon",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/diskon"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/diskon - Tambah Diskon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.status === true) {",
+                  "    pm.collectionVariables.set('diskon_id', res.data.diskon.id.toString());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/diskon",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama_diskon\": \"HEMAT50\",\n    \"persentase_diskon\": 50,\n    \"tanggal_awal\": \"2026-01-01\",\n    \"tanggal_akhir\": \"2026-12-31\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/diskon/:id - Detail Diskon",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/diskon/{{diskon_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/admin/diskon/:id - Update Diskon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/diskon/{{diskon_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"persentase_diskon\": 30,\n    \"tanggal_akhir\": \"2027-06-30\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/diskon/:id - Hapus Diskon",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/diskon/{{diskon_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Admin - Reservasi",
+      "item": [
+        {
+          "name": "GET /api/admin/reservasi - Semua Reservasi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reservasi",
+              "query": [
+                { "key": "month", "value": "11", "disabled": true },
+                { "key": "year", "value": "2026", "disabled": true },
+                { "key": "status", "value": "belum_dikonfirm", "disabled": true },
+                { "key": "id_space", "value": "1", "disabled": true },
+                { "key": "tanggal", "value": "2026-11-10", "disabled": true }
+              ]
+            },
+            "description": "Daftar semua reservasi. Filter opsional: month, year, status, id_space, tanggal"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/reservasi?status=belum_dikonfirm",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reservasi?status=belum_dikonfirm",
+              "query": [{ "key": "status", "value": "belum_dikonfirm" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/admin/reservasi/:id/status - Setujui",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/reservasi/{{reservasi_id}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"disetujui\"\n}"
+            },
+            "description": "Setujui reservasi. Status: belum_dikonfirm → disetujui"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/admin/reservasi/:id/status - Tolak/Batalkan",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/api/admin/reservasi/{{reservasi_id}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"dibatalkan\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/reservasi/:id/check-in",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/reservasi/{{reservasi_id}}/check-in",
+            "description": "Check-in: status harus 'disetujui'. Akan berubah ke 'aktif'."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/reservasi/:id/check-out",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/admin/reservasi/{{reservasi_id}}/check-out",
+            "description": "Check-out: status harus 'aktif'. Akan berubah ke 'selesai'."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13. Admin - Reports",
+      "item": [
+        {
+          "name": "GET /api/admin/reports/monthly - Laporan Bulanan",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reports/monthly?month=11&year=2026",
+              "query": [
+                { "key": "month", "value": "11", "description": "Bulan 1-12" },
+                { "key": "year", "value": "2026", "description": "Tahun" }
+              ]
+            },
+            "description": "Rekap reservasi bulanan: by status, by space, by hari"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/reports/income - Laporan Pendapatan",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reports/income?month=11&year=2026",
+              "query": [
+                { "key": "month", "value": "11" },
+                { "key": "year", "value": "2026" }
+              ]
+            },
+            "description": "Laporan pendapatan: total transaksi selesai, by space, by hari, perbandingan bulan sebelumnya"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14. Upload",
+      "item": [
+        {
+          "name": "POST /api/upload/image - Upload Gambar Umum",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "x-maker-key", "value": "{{app_key}}" }],
+            "url": "{{base_url}}/api/upload/image",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Pilih file gambar (jpg/png/webp, max 5MB)"
+                }
+              ]
+            },
+            "description": "Upload gambar umum. Gunakan field name 'image'. Kembalikan URL file."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/upload/spaces - Upload Foto Space",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/upload/spaces",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "foto",
+                  "type": "file",
+                  "src": "",
+                  "description": "Pilih foto space (jpg/png/webp, max 5MB)"
+                }
+              ]
+            },
+            "description": "Upload foto space. Gunakan field name 'foto'. Salin filename-nya untuk dipakai di PUT /admin/spaces/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/upload/members - Upload Foto Member",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/api/upload/members",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "foto",
+                  "type": "file",
+                  "src": "",
+                  "description": "Pilih foto member (jpg/png/webp, max 5MB)"
+                }
+              ]
+            },
+            "description": "Upload foto profil member. Gunakan field name 'foto'."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
